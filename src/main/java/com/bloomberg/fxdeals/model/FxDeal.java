@@ -2,6 +2,8 @@ package com.bloomberg.fxdeals.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 @Entity
 @Table(name = "fx_deals", uniqueConstraints = {
@@ -27,5 +29,5 @@ public class FxDeal {
     private LocalDateTime dealTimestamp;
 
     @Column(nullable = false, precision = 20, scale = 4)
-    private Double amount;
+    private BigDecimal amount;
 }

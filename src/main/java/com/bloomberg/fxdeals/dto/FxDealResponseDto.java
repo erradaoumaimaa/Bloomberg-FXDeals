@@ -1,5 +1,6 @@
 package com.bloomberg.fxdeals.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record FxDealResponseDto(
@@ -8,5 +9,5 @@ public record FxDealResponseDto(
         String fromCurrency,
         String toCurrency,
         LocalDateTime dealTimestamp,
-        Double amount
+        BigDecimal amount
 ) {}
