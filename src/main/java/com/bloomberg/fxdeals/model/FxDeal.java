@@ -3,16 +3,17 @@ package com.bloomberg.fxdeals.model;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
-
 @Entity
-@Table(name = "fx_deals")
+@Table(name = "fx_deals", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_deal_id", columnNames = {"dealUniqueId"})
+})
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class FxDeal {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     @Column(nullable = false, unique = true, length = 50)
     private String dealUniqueId;
 
@@ -26,5 +27,5 @@ public class FxDeal {
     private LocalDateTime dealTimestamp;
 
     @Column(nullable = false, precision = 20, scale = 4)
-    private Double dealAmount;
+    private Double amount;
 }
