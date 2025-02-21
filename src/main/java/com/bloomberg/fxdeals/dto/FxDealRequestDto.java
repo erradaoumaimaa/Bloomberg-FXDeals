@@ -1,9 +1,6 @@
 package com.bloomberg.fxdeals.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,8 +18,10 @@ public record FxDealRequestDto(
         String toCurrency,
 
         @NotNull(message = "Deal timestamp is required")
+        @PastOrPresent(message = "Deal timestamp must be in the past or present.")
         LocalDateTime dealTimestamp,
 
+        @Digits(integer = 8, fraction = 2, message = "Amount must be a valid number with up to 8 digits and 2 decimal places.")
         @NotNull(message = "Amount is required")
         @Positive(message = "Amount must be positive")
         BigDecimal amount
