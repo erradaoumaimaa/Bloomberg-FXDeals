@@ -1,4 +1,4 @@
-package com.bloomberg.fxdeals.dto;
+package com.bloomberg.fxdeals.dto.fxDeals;
 
 import jakarta.validation.constraints.*;
 

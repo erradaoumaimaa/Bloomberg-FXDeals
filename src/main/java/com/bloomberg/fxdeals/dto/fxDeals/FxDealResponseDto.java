@@ -1,4 +1,4 @@
-package com.bloomberg.fxdeals.dto;
+package com.bloomberg.fxdeals.dto.fxDeals;
 
 public record FxDealResponseDto(
         String dealUniqueId,

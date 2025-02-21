@@ -1,4 +1,4 @@
-package com.bloomberg.fxdeals.dto;
+package com.bloomberg.fxdeals.dto.fxDeals;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
