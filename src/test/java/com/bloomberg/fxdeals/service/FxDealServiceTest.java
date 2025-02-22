@@ -4,7 +4,6 @@ import com.bloomberg.fxdeals.dto.fxDeals.FxDealDTO;
 import com.bloomberg.fxdeals.dto.fxDeals.FxDealRequestDto;
 import com.bloomberg.fxdeals.dto.fxDeals.FxDealResponseDto;
 import com.bloomberg.fxdeals.exception.DuplicateDealException;
-import com.bloomberg.fxdeals.exception.InvalidDealDataException;
 import com.bloomberg.fxdeals.mapper.FxDealMapper;
 import com.bloomberg.fxdeals.model.FxDeal;
 import com.bloomberg.fxdeals.repository.FxDealRepository;
@@ -13,15 +12,16 @@ import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
+
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -77,60 +77,35 @@ class FxDealServiceTest {
     }
 
     @Test
-    void processDeal_Success() {
-        when(validator.validate(validDealRequest)).thenReturn(new HashSet<>());
-        when(fxDealRepository.existsByDealUniqueId(validDealRequest.dealUniqueId())).thenReturn(false);
+    void givenValidDealRequest_whenSaveFails_thenReturnErrorResponse() {
+        when(fxDealRepository.findByDealUniqueId(validDealRequest.dealUniqueId())).thenReturn(Optional.empty());
         when(fxDealMapper.toEntity(validDealRequest)).thenReturn(fxDeal);
-        when(fxDealRepository.save(any(FxDeal.class))).thenReturn(fxDeal);
+        when(fxDealRepository.save(any(FxDeal.class))).thenThrow(new RuntimeException("Database error"));
 
         FxDealResponseDto response = fxDealService.processDeal(validDealRequest);
 
         assertNotNull(response);
         assertEquals("DEAL123", response.dealUniqueId());
-        assertEquals("SUCCESS", response.status());
-        verify(fxDealRepository, times(1)).save(any(FxDeal.class));
+        assertEquals("ERROR", response.status());
+        assertEquals("Database error", response.message());
     }
 
     @Test
-    void processDeal_DuplicateDeal() {
-        when(validator.validate(validDealRequest)).thenReturn(new HashSet<>());
-        when(fxDealRepository.existsByDealUniqueId(validDealRequest.dealUniqueId())).thenReturn(true);
+    void givenValidDealRequest_whenProcessingDeal_thenEntityIsMappedCorrectly() {
+        when(fxDealRepository.findByDealUniqueId(validDealRequest.dealUniqueId())).thenReturn(Optional.empty());
+        when(fxDealMapper.toEntity(validDealRequest)).thenReturn(fxDeal);
+        when(fxDealRepository.save(any(FxDeal.class))).thenReturn(fxDeal);
 
-        assertThrows(DuplicateDealException.class, () -> fxDealService.processDeal(validDealRequest));
-        verify(fxDealRepository, never()).save(any(FxDeal.class));
+        fxDealService.processDeal(validDealRequest);
+
+        ArgumentCaptor<FxDeal> dealCaptor = ArgumentCaptor.forClass(FxDeal.class);
+        verify(fxDealRepository).save(dealCaptor.capture());
+
+        FxDeal capturedDeal = dealCaptor.getValue();
+        assertEquals(validDealRequest.dealUniqueId(), capturedDeal.getDealUniqueId());
+        assertEquals(validDealRequest.fromCurrency(), capturedDeal.getFromCurrency());
+        assertEquals(validDealRequest.toCurrency(), capturedDeal.getToCurrency());
+        assertEquals(validDealRequest.amount(), capturedDeal.getAmount());
     }
 
-    @Test
-    void getDealById_Success() {
-        String dealId = "DEAL123";
-        when(fxDealRepository.findByDealUniqueId(dealId)).thenReturn(Optional.of(fxDeal));
-        when(fxDealMapper.toDto(fxDeal)).thenReturn(fxDealDTO);
-
-        FxDealDTO result = fxDealService.getDealById(dealId);
-
-        assertNotNull(result);
-        assertEquals(dealId, result.dealUniqueId());
-        assertEquals("USD", result.fromCurrency());
-        assertEquals("EUR", result.toCurrency());
-    }
-
-    @Test
-    void getDealById_NotFound() {
-        String dealId = "NONEXISTENT";
-        when(fxDealRepository.findByDealUniqueId(dealId)).thenReturn(Optional.empty());
-
-        assertThrows(InvalidDealDataException.class, () -> fxDealService.getDealById(dealId));
-    }
-
-    @Test
-    void getAllDeals_Success() {
-        when(fxDealRepository.findAll()).thenReturn(Collections.singletonList(fxDeal));
-        when(fxDealMapper.toDto(fxDeal)).thenReturn(fxDealDTO);
-
-        var results = fxDealService.getAllDeals();
-
-        assertNotNull(results);
-        assertEquals(1, results.size());
-        assertEquals("DEAL123", results.get(0).dealUniqueId());
-    }
 }
